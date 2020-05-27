@@ -1,14 +1,4 @@
 commands:
-  # NB: This command must be run as the first command in a job. It
-  # attaches the workspace at ~/workspace; this workspace is generated
-  # by the setup job. Note that ~/workspace is not the default working
-  # directory (that's ~/project).
-  attach_scripts:
-    description: "Attach the scripts that power everything else"
-    steps:
-      - attach_workspace:
-          name: Attaching workspace
-          at: ~/workspace
 
   # This system setup script is meant to run before the CI-related scripts, e.g.,
   # installing Git client, checking out code, setting up CI env, and
