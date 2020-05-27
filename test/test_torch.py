@@ -17539,44 +17539,33 @@ class TestViewOps(TestCase):
         return True
 
     @onlyOnCPUAndCUDA
-    def test_real_self(self, device):
-        t = torch.ones((5, 5), device=device)
-        s = torch.real(t)
-        self.assertTrue(s is t)
+    @dtypes(*(torch.testing.get_all_int_dtypes() + torch.testing.get_all_fp_dtypes()))
+    def test_real_imag_noncomplex(self, device, dtype):
+        t = torch.ones((5, 5), dtype=dtype, device=device)
 
-        # TODO: update when the imag attribute is implemented
-        self.assertTrue(not hasattr(t, 'real'))
-
-    # TODO: update after torch.real is implemented for complex tensors
-    @onlyOnCPUAndCUDA
-    def test_real_view(self, device):
-        t = torch.tensor((1 + 1j), device=device)
         with self.assertRaises(RuntimeError):
-            v = torch.real(t)
-            self.assertTrue(self.is_view_of(t, v))
-
-            v[0] = 0
-            self.assertEqual(t.float()[0], v[0])
-            self.assertTrue(t[0] == complex(0, 1))
-
-    def test_imag_noncomplex(self, device):
-        t = torch.ones((5, 5), device=device)
+            torch.real(t)
 
         with self.assertRaises(RuntimeError):
             torch.imag(t)
 
-        # TODO: update when the imag attribute is implemented
-        self.assertTrue(not hasattr(t, 'imag'))
+    @unittest.skipIf(not TEST_NUMPY, "Numpy not found")
+    @onlyOnCPUAndCUDA
+    @dtypes(*torch.testing.get_all_complex_dtypes())
+    def test_real_imag_view(self, device, dtype):
+        t = torch.randn(3, 3, dtype=dtype, device=device)
 
-    # TODO: update after torch.imag is implemented for complex tensors
-    def test_imag_complex(self, device):
-        t = torch.tensor((1 + 1j), device=device)
-        with self.assertRaises(RuntimeError):
-            v = torch.imag(t)
-            self.assertTrue(self.is_view_of(t, v))
+        re = t.real
+        exp = torch.from_numpy(t.numpy().real)
+        self.assertEqual(re, exp)
+        # TODO: update this to use is_view_of() when the autograd code is correctly handled for .real
+        self.assertTrue(t.storage().data_ptr() == re.storage().data_ptr())
 
-            v[0] = 0
-            self.assertTrue(t[0] == complex(1, 0))
+        im = t.imag
+        exp = torch.from_numpy(t.numpy().imag)
+        self.assertEqual(im, exp)
+        # TODO: update this to use is_view_of() when the autograd code is correctly handled for .imag
+        self.assertTrue(t.storage().data_ptr() == im.storage().data_ptr())
 
     def test_diagonal_view(self, device):
         t = torch.ones((5, 5), device=device)
